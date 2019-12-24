@@ -6,8 +6,9 @@ from .exporter import HugoExporter
 class HugoWriter:
     """A configurable writer to create Hugo markdown from a Jupyter notebook."""
     
-    def __init__(self, config=None):
+    def __init__(self, use_page_bundle, config=None):
         self._exporter = HugoExporter(config)
+        self._use_page_bundle = use_page_bundle
         
     def convert(self, notebook, site_dir, section):
         """Convert a Jupyter notebook into a Hugo markdown and write 
@@ -20,7 +21,7 @@ class HugoWriter:
     def _write_resources_images(self, resources, site_dir, section):
         """Process resources to create output images in static directory."""
         name = resources['metadata']['name']
-        target_dir = os.path.join(site_dir, 'static', section, name)
+        target_dir = self._image_dir(site_dir, section, name)
         if 'outputs' in resources:
             if resources['outputs']:
                 os.makedirs(target_dir, exist_ok=True)
@@ -42,10 +43,24 @@ class HugoWriter:
     def _write_markdown(self, markdown, resources, site_dir, section):
         """Save markdown to file."""
         name = resources['metadata']['name']
-        target_dir = os.path.join(site_dir, 'content', section)
-        os.makedirs(target_dir, exist_ok=True)
-        target = os.path.join(target_dir, f'{name}.md')
+
+        target = self._markdown_file(site_dir, section, name)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+
         with open(target, 'w') as f:
             f.write(markdown)
             shortname = '/'.join(target.split('/')[-2:])
             print(f"Created '{shortname}'")
+
+    def _image_dir(self, site_dir, section, name):
+        if self._use_page_bundle:
+            return os.path.join(site_dir, 'content', section, name)
+        else:
+            return os.path.join(site_dir, 'static', section, name)
+
+    def _markdown_file(self, site_dir, section, name):
+        if self._use_page_bundle:
+            return os.path.join(site_dir, 'content', section, name, 'index.md')
+        else:
+            return os.path.join(site_dir, 'content', section, f'{name}.md')
+

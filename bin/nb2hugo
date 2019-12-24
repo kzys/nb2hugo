@@ -14,14 +14,16 @@ def parse_arguments():
                         help='path to hugo site directory')
     parser.add_argument('--section', required=True, 
                         help='content section where to create markdown')
+    parser.add_argument('--use-page-bundle', action='store_true',
+                        help='use Page Bundles')
     args = parser.parse_args()
     _, ext = os.path.splitext(os.path.basename(args.notebook))
     if ext != '.ipynb':
         parser.error('Notebook is expected to have a .ipynb extension.')
-    return args.notebook, args.site_dir, args.section
+    return args.notebook, args.site_dir, args.section, args.use_page_bundle
     
     
 if __name__ == '__main__':
-    notebook, site_dir, section = parse_arguments()
-    writer = HugoWriter()
+    notebook, site_dir, section, use_page_bundle = parse_arguments()
+    writer = HugoWriter(use_page_bundle)
     writer.convert(notebook, site_dir, section)
